@@ -12,11 +12,13 @@ const NewList = () => {
   const [usersFiltered, setUsersFiltered] = useState(null);
   const [filter, setFilter] = useState({ status: "active", availability: "", search: "" });
 
+  const loadUsers = async () => {
+    const { data } = await api.get("/user");
+    setUsers(data);
+  };
+
   useEffect(() => {
-    (async () => {
-      const { data } = await api.get("/user");
-      setUsers(data);
-    })();
+    loadUsers();
     getProjects();
   }, []);
 
@@ -71,7 +73,7 @@ const NewList = () => {
               </span>
             </div>
           </div>
-          <Create />
+          <Create onUserCreated={loadUsers} />
         </div>
         <div className="overflow-x-auto">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 py-6 gap-5 ">
@@ -85,9 +87,8 @@ const NewList = () => {
   );
 };
 
-const Create = () => {
+const Create = ({ onUserCreated }) => {
   const [open, setOpen] = useState(false);
-
   const history = useHistory();
 
   return (
@@ -111,11 +112,13 @@ const Create = () => {
                   values.status = "active";
                   values.availability = "not available";
                   values.role = "ADMIN";
+                  values.name = values.username;
                   const res = await api.post("/user", values);
                   if (!res.ok) throw res;
                   toast.success("Created!");
                   setOpen(false);
-                  history.push(`/user/${res.data._id}`);
+                  await onUserCreated();
+                  history.push(`/user`);
                 } catch (e) {
                   console.log(e);
                   toast.error("Some Error!", e.code);
@@ -247,7 +250,7 @@ const UserCard = ({ hit, projects }) => {
       {/* infos */}
       <div className="flex flex-col flex-1 justify-between">
         <div className="flex flex-col items-center text-center my-4 space-y-1">
-          <p className="font-semibold text-lg">{hit.name}</p>
+          <p className="font-semibold text-lg">{hit.name || hit.username}</p>
         </div>
       </div>
     </div>
