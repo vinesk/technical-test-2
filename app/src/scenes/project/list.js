@@ -35,7 +35,7 @@ const ProjectList = () => {
 
   return (
     <div className="w-full p-2 md:!px-8">
-      <Create onChangeSearch={handleSearch} />
+      <Create onChangeSearch={handleSearch} setProjects={setProjects} />
       <div className="py-3">
         {activeProjects.map((hit) => {
           return (
@@ -92,7 +92,7 @@ const Budget = ({ project }) => {
   return <ProgressBar percentage={width} max={budget_max_monthly} value={total} />;
 };
 
-const Create = ({ onChangeSearch }) => {
+const Create = ({ onChangeSearch, setProjects }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -142,8 +142,12 @@ const Create = ({ onChangeSearch }) => {
               onSubmit={async (values, { setSubmitting }) => {
                 try {
                   values.status = "active";
-                  const res = await api.post("/project", values);
-                  if (!res.ok) throw res;
+                  const { data } = await api.post("/project", values);
+                  if (!data) throw new Error("No data received");
+
+                  // Mise à jour de la liste des projets
+                  setProjects((prev) => [...prev, data]);
+
                   toast.success("Created!");
                   setOpen(false);
                 } catch (e) {
