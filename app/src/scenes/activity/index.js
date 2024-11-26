@@ -96,8 +96,15 @@ const Activities = ({ date, user, project }) => {
   async function onDelete(i) {
     if (window.confirm("Are you sure ?")) {
       const activity = activities[i];
-      await api.remove(`/activity/${activity._id}`);
-      toast.success(`Deleted ${activity.project}`);
+      try {
+        await api.remove(`/activity/${activity._id}`);
+        const newActivities = activities.filter((_, index) => index !== i);
+        setActivities(newActivities);
+        toast.success(`Deleted ${activity.projectName}`);
+      } catch (error) {
+        console.log(error);
+        toast.error("Error while deleting activity");
+      }
     }
   }
 
