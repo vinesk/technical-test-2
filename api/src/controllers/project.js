@@ -19,10 +19,10 @@ router.get("/list", passport.authenticate("user", { session: false }), async (re
 
 router.get("/:id", passport.authenticate("user", { session: false }), async (req, res) => {
   try {
-    const data = await ProjectObject.find({ _id: req.params.id });
+    const data = await ProjectObject.findOne({ _id: req.params.id, organisation: req.user.organisation });
+    if (!data) return res.status(404).send({ ok: false, code: "PROJECT_NOT_FOUND" });
     return res.status(200).send({ ok: true, data });
   } catch (error) {
-    console.log(error);
     res.status(500).send({ ok: false, code: SERVER_ERROR, error });
   }
 });

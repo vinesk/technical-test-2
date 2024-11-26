@@ -23,10 +23,14 @@ export default function ProjectView() {
 
   useEffect(() => {
     (async () => {
-      const { data: u } = await api.get(`/project/${id}`);
-      setProject(u);
+      try {
+        const response = await api.get(`/project/${id}`);
+        setProject(response.data);
+      } catch (error) {
+        console.error("Error fetching project:", error);
+      }
     })();
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (copied) {
