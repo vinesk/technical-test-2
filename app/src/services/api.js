@@ -111,7 +111,7 @@ const api = {
         throw {
           code: data.code || (response.status === 401 ? "INVALID_CREDENTIALS" : response.status === 409 ? "USER_ALREADY_REGISTERED" : "SERVER_ERROR"),
           status: response.status,
-          message: data.message || "Une erreur est survenue",
+          message: data.message || "An error occurred",
         };
       }
 
@@ -120,7 +120,7 @@ const api = {
       throw {
         code: e.code || "NETWORK_ERROR",
         status: e.status || 500,
-        message: e.message || "Erreur de connexion",
+        message: e.message || "Connection error",
       };
     }
   },

@@ -73,7 +73,7 @@ const ProjectDetails = ({ project }) => {
             <div className="w-full">
               <div className="flex justify-between gap-2">
                 <div className="flex gap-20">
-                  <span className="w-fit text-[20px] text-[#0C1024] font-bold">Nom du projet : </span>
+                  <span className="w-fit text-[20px] text-[#0C1024] font-bold">Project name : </span>
                   <span className="w-fit text-[20px] text-[#0C1024] font-bold">{project?.name || ""}</span>
                 </div>
                 <div className="flex flex-1 flex-column items-end gap-3">

@@ -39,24 +39,23 @@ export default function Signin() {
     } catch (e) {
       if (!isMounted) return;
 
-      let errorMessage = "Une erreur est survenue";
+      let errorMessage = "An error occurred";
 
       switch (e.code) {
         case "INVALID_CREDENTIALS":
-          errorMessage = "Identifiants incorrects";
+          errorMessage = "Invalid credentials";
           break;
         case "NETWORK_ERROR":
-          errorMessage = "Erreur de connexion au serveur";
+          errorMessage = "Server connection error";
           break;
         default:
-          errorMessage = "Une erreur est survenue";
+          errorMessage = "An error occurred";
       }
 
       toast.error(errorMessage);
 
       if (isMounted) {
         actions.setSubmitting(false);
-        // Réinitialiser le mot de passe en cas d'erreur
         actions.setFieldValue("password", "", false);
       }
     }

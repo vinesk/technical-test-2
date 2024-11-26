@@ -41,27 +41,26 @@ export default function Signup() {
     } catch (e) {
       if (!isMounted) return;
 
-      let errorMessage = "Une erreur est survenue";
+      let errorMessage = "An error occurred";
 
       switch (e.code) {
         case "USER_ALREADY_REGISTERED":
-          errorMessage = "Ce nom d'utilisateur est déjà pris";
+          errorMessage = "This username is already taken";
           break;
         case "PASSWORD_NOT_VALIDATED":
-          errorMessage = "Le mot de passe n'est pas valide";
+          errorMessage = "The password is not valid";
           break;
         case "NETWORK_ERROR":
-          errorMessage = "Erreur de connexion au serveur";
+          errorMessage = "Server connection error";
           break;
         default:
-          errorMessage = "Une erreur est survenue lors de l'inscription";
+          errorMessage = "An error occurred during registration";
       }
 
       toast.error(errorMessage);
 
       if (isMounted) {
         actions.setSubmitting(false);
-        // Réinitialiser le mot de passe en cas d'erreur
         actions.setFieldValue("password", "", false);
       }
     }
