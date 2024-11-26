@@ -11,7 +11,7 @@ import SelectMonth from "./../../components/selectMonth";
 import { getDaysInMonth } from "./utils";
 
 const Activity = () => {
-  const [date, setDate] = useState(null);
+  const [date, setDate] = useState("");
   const [user, setUser] = useState(null);
   const [project, setProject] = useState("");
 
@@ -175,7 +175,7 @@ const Activities = ({ date, user, project }) => {
                   </tr>
                   {activities.map((e, i) => {
                     return (
-                      <React.Fragment key={e.project}>
+                      <React.Fragment key={e._id || `activity-${i}`}>
                         <tr className="border-t border-b border-r border-[#E5EAEF]" key={`1-${e._id}`} onClick={() => setOpen(i)}>
                           <th className="w-[100px] border-t border-b border-r text-[12px] font-bold text-[#212325] text-left">
                             <div className="flex flex-1 items-center justify-between gap-1 px-2">
