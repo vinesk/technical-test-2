@@ -109,6 +109,22 @@ const Activities = ({ date, user, project }) => {
   }
 
   function onUpdateValue(i, j, value) {
+    // Ne permet que les valeurs 0 ou 1
+    if (value !== 0 && value !== 1) return;
+
+    // Si on essaie de mettre 1
+    if (value === 1) {
+      // Vérifier si un autre projet a déjà 1 pour ce jour
+      const hasConflict = activities.some((activity, index) => {
+        return index !== i && activity.detail[j].value === 1;
+      });
+
+      if (hasConflict) {
+        toast.error("Another project is already registered for this day");
+        return;
+      }
+    }
+
     const n = [...activities];
     n[i].detail[j].value = value;
     n[i].total = n[i].detail.reduce((acc, b) => acc + b.value, 0);
@@ -250,18 +266,23 @@ const Activities = ({ date, user, project }) => {
 const Field = ({ value = 0, onChange, invoiced, ...rest }) => {
   let bgColor = invoiced === "yes" ? "bg-[#F0F0F0]" : "bg-[white]";
   let textColor = "text-[#000]";
-  if (value >= 7) {
+
+  if (value >= 1) {
     bgColor = "bg-[#216E39]";
     textColor = "text-[#fff]";
-  } else if (value >= 5) {
-    bgColor = "bg-[#30A14E]";
-  } else if (value >= 3) {
-    bgColor = "bg-[#40C463]";
   } else if (value > 0) {
     bgColor = "bg-[#9BE9A8]";
   } else {
     textColor = "text-[#aaa]";
   }
+
+  const handleChange = (e) => {
+    const newValue = parseFloat(e.target.value);
+    // Ne permet que les valeurs 0 ou 1
+    if (newValue === 0 || newValue === 1) {
+      onChange(e);
+    }
+  };
 
   return (
     <th className={`border border-[#E5EAEF] py-[6px] ${bgColor}`}>
@@ -270,10 +291,11 @@ const Field = ({ value = 0, onChange, invoiced, ...rest }) => {
         disabled={invoiced === "yes"}
         value={value}
         min={0}
+        max={1}
         {...rest}
         type="number"
-        step="0.1"
-        onChange={onChange}
+        step={1}
+        onChange={handleChange}
         onFocus={(e) => {
           if (Number(e.target.value) === 0) {
             e.target.value = "";
