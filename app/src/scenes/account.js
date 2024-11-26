@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
+import { useHistory } from "react-router-dom";
 
 import "react-tagsinput/react-tagsinput.css";
 import Loader from "../components/loader";
@@ -8,7 +9,7 @@ import LoadingButton from "../components/loadingButton";
 import { setUser } from "../redux/auth/actions";
 import api from "../services/api";
 
-export default () => {
+export default function Account() {
   const user = useSelector((state) => state.Auth.user);
   const [isLoading, setIsLoading] = useState(false);
   const [values, setValues] = useState({
@@ -18,21 +19,41 @@ export default () => {
     address: user.address,
   });
   const dispatch = useDispatch();
+  const history = useHistory();
+  const [abortController] = useState(new AbortController());
+  const [isMounted, setIsMounted] = useState(true);
+
+  useEffect(() => {
+    return () => {
+      abortController.abort();
+      setIsMounted(false);
+    };
+  }, [abortController]);
+
   if (!user) return <Loader />;
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!isMounted) return;
     setIsLoading(true);
     let body = values;
     try {
-      const responseData = await api.put(`/user/${user._id}`, body);
-      toast.success("Updated!");
-      dispatch(setUser(responseData.user));
+      const responseData = await api.put(`/user/${user._id}`, body, {
+        signal: abortController.signal,
+      });
+      if (isMounted) {
+        toast.success("Updated!");
+        dispatch(setUser(responseData.data));
+        setIsLoading(false);
+        history.push("/");
+      }
     } catch (e) {
-      console.log(e);
-      toast.error("Some Error!");
+      if (e.name !== "AbortError" && isMounted) {
+        console.log(e);
+        toast.error("Some Error!");
+        setIsLoading(false);
+      }
     }
-    setIsLoading(false);
   }
 
   return (
@@ -49,7 +70,7 @@ export default () => {
               </div>
               <div className="w-full md:w-[48.5%]">
                 <div>Email</div>
-                <input className="projectsInput" value={values.email} />
+                <input className="projectsInput" name="email" value={values.email} onChange={(e) => setValues({ ...values, email: e.target.value })} />
               </div>
             </div>
             {/* second Row */}
@@ -74,4 +95,4 @@ export default () => {
       <Toaster />
     </div>
   );
-};
+}
