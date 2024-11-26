@@ -1,42 +1,77 @@
 import { Field, Formik } from "formik";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, Redirect } from "react-router-dom";
+import { Link, Redirect, useHistory } from "react-router-dom";
 import validator from "validator";
 
 import { setUser } from "../../redux/auth/actions";
-
 import LoadingButton from "../../components/loadingButton";
 import api from "../../services/api";
 
 export default function Signup() {
+  const history = useHistory();
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.Auth.user);
+  const [isMounted, setIsMounted] = useState(true);
+
+  // Cleanup effect
+  useEffect(() => {
+    dispatch(setUser(null));
+    api.setToken(null);
+    return () => {
+      setIsMounted(false);
+    };
+  }, [dispatch]);
+
+  const handleSubmit = async (values, actions) => {
+    if (!isMounted) return;
+
+    try {
+      const response = await api.post(`/user/signup`, values);
+
+      if (!isMounted) return;
+
+      const { user, token } = response;
+      if (token) api.setToken(token);
+      if (user) {
+        actions.setSubmitting(false);
+        dispatch(setUser(user));
+        history.replace("/");
+      }
+    } catch (e) {
+      if (!isMounted) return;
+
+      let errorMessage = "Une erreur est survenue";
+
+      switch (e.code) {
+        case "USER_ALREADY_REGISTERED":
+          errorMessage = "Ce nom d'utilisateur est déjà pris";
+          break;
+        case "PASSWORD_NOT_VALIDATED":
+          errorMessage = "Le mot de passe n'est pas valide";
+          break;
+        case "NETWORK_ERROR":
+          errorMessage = "Erreur de connexion au serveur";
+          break;
+        default:
+          errorMessage = "Une erreur est survenue lors de l'inscription";
+      }
+
+      toast.error(errorMessage);
+
+      if (isMounted) {
+        actions.setSubmitting(false);
+        // Réinitialiser le mot de passe en cas d'erreur
+        actions.setFieldValue("password", "", false);
+      }
+    }
+  };
 
   return (
-    // Auth Wrapper
     <div className="authWrapper font-myfont">
       <div className="font-[Helvetica] text-center text-[32px] font-semibold	mb-[15px]">Account team</div>
 
-      {user && <Redirect to="/" />}
-      <Formik
-        initialValues={{ username: "", organisation: "", password: "" }}
-        onSubmit={async (values, actions) => {
-          try {
-            const { user, token } = await api.post(`/user/signup`, values);
-            if (token) api.setToken(token);
-            if (user) dispatch(setUser(user));
-          } catch (e) {
-            console.log("Error details:", e);
-            if (e.status === 409) {
-              toast.error("This username is already taken");
-            } else {
-              toast.error(e.message || "An error occurred during signup");
-            }
-          }
-          actions.setSubmitting(false);
-        }}>
+      <Formik initialValues={{ username: "", organisation: "", password: "" }} onSubmit={handleSubmit}>
         {({ values, errors, isSubmitting, handleChange, handleSubmit }) => {
           return (
             <form onSubmit={handleSubmit}>

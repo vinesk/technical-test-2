@@ -21,7 +21,7 @@ const Home = () => {
             <img src={user.avatar} alt="userlogo" className="rounded-full w-14 h-14" />
             <div>
               <h3 className="font-semibold text-lg mb-[3px]">{user.name}</h3>
-              {/* <h3 className="text-[#676D7C] text-sm">{user.email}</h3> */}
+              <h3 className="text-[#676D7C] text-sm">{user.email}</h3>
               <h3 className="text-[#676D7C] text-sm">{user.job_title}</h3>
               <p className="text-[#676D7C] text-sm capitalize">{user.availability}</p>
             </div>

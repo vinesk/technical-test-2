@@ -2,7 +2,7 @@ import { Field, Formik } from "formik";
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, Redirect } from "react-router-dom";
+import { Link, Redirect, useHistory } from "react-router-dom";
 import validator from "validator";
 
 import { setUser } from "../../redux/auth/actions";
@@ -11,110 +11,115 @@ import LoadingButton from "../../components/loadingButton";
 import api from "../../services/api";
 
 export default function Signin() {
+  const history = useHistory();
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.Auth.user);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const [isMounted, setIsMounted] = useState(true);
-  const [abortController] = useState(new AbortController());
 
   useEffect(() => {
     return () => {
-      abortController.abort();
       setIsMounted(false);
     };
-  }, [abortController]);
+  }, []);
 
-  if (user || isRedirecting) return <Redirect to="/" />;
+  const handleSubmit = async (values, actions) => {
+    if (!isMounted) return;
+
+    try {
+      const response = await api.post(`/user/signin`, values);
+
+      if (!isMounted) return;
+
+      const { user, token } = response;
+      if (token) api.setToken(token);
+      if (user) {
+        actions.setSubmitting(false);
+        dispatch(setUser(user));
+        history.replace("/");
+      }
+    } catch (e) {
+      if (!isMounted) return;
+
+      let errorMessage = "Une erreur est survenue";
+
+      switch (e.code) {
+        case "INVALID_CREDENTIALS":
+          errorMessage = "Identifiants incorrects";
+          break;
+        case "NETWORK_ERROR":
+          errorMessage = "Erreur de connexion au serveur";
+          break;
+        default:
+          errorMessage = "Une erreur est survenue";
+      }
+
+      toast.error(errorMessage);
+
+      if (isMounted) {
+        actions.setSubmitting(false);
+        // Réinitialiser le mot de passe en cas d'erreur
+        actions.setFieldValue("password", "", false);
+      }
+    }
+  };
 
   return (
-    // Auth Wrapper
     <div className="authWrapper font-myfont">
       <div className="font-[Helvetica] text-center text-[32px] font-semibold	mb-[15px]">Account team</div>
 
-      <Formik
-        initialValues={{ username: "", password: "" }}
-        onSubmit={async (values, actions) => {
-          try {
-            const { user, token } = await api.post(`/user/signin`, values, {
-              signal: abortController.signal,
-            });
-
-            if (isMounted) {
-              if (token) api.setToken(token);
-              if (user) {
-                setIsRedirecting(true);
-                dispatch(setUser(user));
-              }
-            }
-          } catch (e) {
-            if (e.name !== "AbortError" && isMounted) {
-              console.log("e", e);
-              toast.error("Wrong login", e.code);
-            }
-          } finally {
-            if (isMounted) {
-              actions.setSubmitting(false);
-            }
-          }
-        }}>
-        {({ values, errors, isSubmitting, handleChange, handleSubmit }) => {
-          return (
-            <form onSubmit={handleSubmit}>
-              <div className="mb-[25px]">
-                <div className="flex flex-col-reverse">
-                  <Field
-                    className="peer signInInputs "
-                    validate={(v) => validator.isEmpty(v) && "This field is Required"}
-                    name="username"
-                    type="text"
-                    id="username"
-                    value={values.username}
-                    onChange={handleChange}
-                  />
-                  <label className="peer-focus:text-[#116eee]" htmlFor="username">
-                    Username
-                  </label>
-                </div>
-                {/* Error */}
-                <p className="text-[12px] text-[#FD3131]">{errors.username}</p>
+      <Formik initialValues={{ username: "", password: "" }} onSubmit={handleSubmit}>
+        {({ values, errors, isSubmitting, handleChange, handleSubmit }) => (
+          <form onSubmit={handleSubmit}>
+            <div className="mb-[25px]">
+              <div className="flex flex-col-reverse">
+                <Field
+                  className="peer signInInputs "
+                  validate={(v) => validator.isEmpty(v) && "This field is Required"}
+                  name="username"
+                  type="text"
+                  id="username"
+                  value={values.username}
+                  onChange={handleChange}
+                />
+                <label className="peer-focus:text-[#116eee]" htmlFor="username">
+                  Username
+                </label>
               </div>
-              <div className="mb-[25px]">
-                <div className="flex flex-col-reverse">
-                  <Field
-                    className="peer signInInputs"
-                    validate={(v) => validator.isEmpty(v) && "This field is Required"}
-                    name="password"
-                    type="password"
-                    id="password"
-                    value={values.password}
-                    onChange={handleChange}
-                  />
-                  <label className="peer-focus:text-[#116eee]" htmlFor="password">
-                    Password
-                  </label>
-                </div>
-                {/* Error */}
-                <p className="text-[12px] text-[#FD3131]">{errors.password}</p>
+              <p className="text-[12px] text-[#FD3131]">{errors.username}</p>
+            </div>
+            <div className="mb-[25px]">
+              <div className="flex flex-col-reverse">
+                <Field
+                  className="peer signInInputs"
+                  validate={(v) => validator.isEmpty(v) && "This field is Required"}
+                  name="password"
+                  type="password"
+                  id="password"
+                  value={values.password}
+                  onChange={handleChange}
+                />
+                <label className="peer-focus:text-[#116eee]" htmlFor="password">
+                  Password
+                </label>
               </div>
-              {/* SignIn Button */}
-              <div className="flex gap-3">
-                <LoadingButton
-                  className="font-[Helvetica] w-[220px] bg-[#007bff] hover:bg-[#0069d9] text-[#fff] rounded-[30px] m-auto block text-[16px] p-[8px] min-h-[42px] "
-                  loading={isSubmitting}
-                  type="submit"
-                  color="primary">
-                  Signin
-                </LoadingButton>
-                <LoadingButton
-                  className="font-[Helvetica] w-[220px] bg-[#009dff] hover:bg-[#0069d9] text-[#fff] rounded-[30px] m-auto block text-[16px] p-[8px] min-h-[42px] "
-                  onClick={() => (window.location.href = "/auth/signup")}
-                  color="primary">
-                  Signup
-                </LoadingButton>
-              </div>
-            </form>
-          );
-        }}
+              <p className="text-[12px] text-[#FD3131]">{errors.password}</p>
+            </div>
+            <div className="flex gap-3">
+              <LoadingButton
+                className="font-[Helvetica] w-[220px] bg-[#007bff] hover:bg-[#0069d9] text-[#fff] rounded-[30px] m-auto block text-[16px] p-[8px] min-h-[42px] "
+                loading={isSubmitting}
+                type="submit"
+                color="primary">
+                Signin
+              </LoadingButton>
+              <LoadingButton
+                className="font-[Helvetica] w-[220px] bg-[#009dff] hover:bg-[#0069d9] text-[#fff] rounded-[30px] m-auto block text-[16px] p-[8px] min-h-[42px] "
+                onClick={() => history.push("/auth/signup")}
+                color="primary">
+                Signup
+              </LoadingButton>
+            </div>
+          </form>
+        )}
       </Formik>
     </div>
   );

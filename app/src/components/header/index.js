@@ -1,19 +1,27 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import Logo from "../../assets/logo_full_blue.png";
 import { setUser } from "../../redux/auth/actions";
 import api from "../../services/api";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
   const dispatch = useDispatch();
   const user = useSelector((state) => state.Auth.user);
+  const history = useHistory();
+
   async function logout() {
-    await api.post(`/user/logout`);
-    dispatch(setUser(null));
+    try {
+      await api.post(`/user/logout`);
+      dispatch(setUser(null));
+      api.setToken(null);
+      localStorage.clear();
+      history.replace("/auth");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   }
 
   async function handleAvailability(availability) {

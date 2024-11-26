@@ -61,7 +61,17 @@ class Auth {
     try {
       const { password, username, organisation } = req.body;
 
-      if (password && !validatePassword(password)) return res.status(200).send({ ok: false, user: null, code: PASSWORD_NOT_VALIDATED });
+      const existingUser = await this.model.findOne({ name: username });
+      if (existingUser) {
+        return res.status(409).send({
+          ok: false,
+          code: USER_ALREADY_REGISTERED,
+        });
+      }
+
+      if (password && !validatePassword(password)) {
+        return res.status(200).send({ ok: false, user: null, code: PASSWORD_NOT_VALIDATED });
+      }
 
       const user = await this.model.create({ name: username, organisation, password });
       const token = jwt.sign({ _id: user._id }, SECRET, { expiresIn: JWT_MAX_AGE });
@@ -71,8 +81,12 @@ class Auth {
       return res.status(200).send({ user, token, ok: true });
     } catch (error) {
       console.log("e", error);
-      if (error.code === 11000) return res.status(409).send({ ok: false, code: USER_ALREADY_REGISTERED });
-      console.log(error);
+      if (error.code === 11000) {
+        return res.status(409).send({
+          ok: false,
+          code: USER_ALREADY_REGISTERED,
+        });
+      }
       return res.status(500).send({ ok: false, code: SERVER_ERROR });
     }
   }

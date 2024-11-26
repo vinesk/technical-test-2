@@ -17,16 +17,32 @@ router.post("/signin", (req, res) => UserAuth.signin(req, res));
 router.post("/logout", (req, res) => UserAuth.logout(req, res));
 router.post("/signup", (req, res) => UserAuth.signup(req, res));
 
-router.get("/signin_token", passport.authenticate("user", { session: false }), (req, res) => UserAuth.signinToken(req, res));
+router.get("/signin_token", passport.authenticate("user", { session: false }), (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).send({ ok: false, user: null });
+    }
+    return res.status(200).send({ ok: true, user: req.user, token: req.cookies.jwt });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ ok: false, code: "SERVER_ERROR" });
+  }
+});
 
 router.get("/available", passport.authenticate("user", { session: false }), async (req, res) => {
   try {
-    const users = await UserObject.find({ availability: { $ne: "not available" }, organisation: req.user.organisation }).sort("-last_login_at");
+    if (!req.user) {
+      return res.status(401).send({ ok: false, user: null });
+    }
+    const users = await UserObject.find({
+      availability: { $ne: "not available" },
+      organisation: req.user.organisation,
+    }).sort("-last_login_at");
 
     return res.status(200).send({ ok: true, data: users });
   } catch (error) {
     console.log(error);
-    res.status(500).send({ ok: false, code: SERVER_ERROR, error });
+    res.status(500).send({ ok: false, code: "SERVER_ERROR", error });
   }
 });
 
