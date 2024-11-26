@@ -10,7 +10,7 @@ import { setUser } from "../../redux/auth/actions";
 import LoadingButton from "../../components/loadingButton";
 import api from "../../services/api";
 
-export default () => {
+export default function Signin() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.Auth.user);
 
@@ -94,4 +94,4 @@ export default () => {
       </Formik>
     </div>
   );
-};
+}

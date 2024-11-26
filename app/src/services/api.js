@@ -81,12 +81,22 @@ class api {
         });
 
         const res = await response.json();
-        if (response.status !== 200) {
-          return reject(res);
+        if (response.status < 200 || response.status >= 300) {
+          return reject({
+            code: res.code,
+            status: response.status,
+            message: res.message || "An error occurred",
+            response: response,
+          });
         }
         resolve(res);
       } catch (e) {
-        reject(e);
+        reject({
+          code: "NETWORK_ERROR",
+          status: 500,
+          message: "Network error occurred",
+          error: e,
+        });
       }
     });
   }

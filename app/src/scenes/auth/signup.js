@@ -10,7 +10,7 @@ import { setUser } from "../../redux/auth/actions";
 import LoadingButton from "../../components/loadingButton";
 import api from "../../services/api";
 
-export default () => {
+export default function Signup() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.Auth.user);
 
@@ -28,8 +28,12 @@ export default () => {
             if (token) api.setToken(token);
             if (user) dispatch(setUser(user));
           } catch (e) {
-            console.log("e", e);
-            toast.error("Wrong login", e.code);
+            console.log("Error details:", e);
+            if (e.status === 409) {
+              toast.error("This username is already taken");
+            } else {
+              toast.error(e.message || "An error occurred during signup");
+            }
           }
           actions.setSubmitting(false);
         }}>
@@ -104,4 +108,4 @@ export default () => {
       </Formik>
     </div>
   );
-};
+}
