@@ -1,5 +1,5 @@
 import { Field, Formik } from "formik";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Redirect } from "react-router-dom";
@@ -13,25 +13,49 @@ import api from "../../services/api";
 export default function Signin() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.Auth.user);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isMounted, setIsMounted] = useState(true);
+  const [abortController] = useState(new AbortController());
+
+  useEffect(() => {
+    return () => {
+      abortController.abort();
+      setIsMounted(false);
+    };
+  }, [abortController]);
+
+  if (user || isRedirecting) return <Redirect to="/" />;
 
   return (
     // Auth Wrapper
     <div className="authWrapper font-myfont">
       <div className="font-[Helvetica] text-center text-[32px] font-semibold	mb-[15px]">Account team</div>
 
-      {user && <Redirect to="/" />}
       <Formik
         initialValues={{ username: "", password: "" }}
         onSubmit={async (values, actions) => {
           try {
-            const { user, token } = await api.post(`/user/signin`, values);
-            if (token) api.setToken(token);
-            if (user) dispatch(setUser(user));
+            const { user, token } = await api.post(`/user/signin`, values, {
+              signal: abortController.signal,
+            });
+
+            if (isMounted) {
+              if (token) api.setToken(token);
+              if (user) {
+                setIsRedirecting(true);
+                dispatch(setUser(user));
+              }
+            }
           } catch (e) {
-            console.log("e", e);
-            toast.error("Wrong login", e.code);
+            if (e.name !== "AbortError" && isMounted) {
+              console.log("e", e);
+              toast.error("Wrong login", e.code);
+            }
+          } finally {
+            if (isMounted) {
+              actions.setSubmitting(false);
+            }
           }
-          actions.setSubmitting(false);
         }}>
         {({ values, errors, isSubmitting, handleChange, handleSubmit }) => {
           return (
