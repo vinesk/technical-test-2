@@ -1,7 +1,7 @@
 const passport = require("passport");
 const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
-const { secret } = require("./config");
+const { SECRET } = require("./config");
 
 // load up the user model
 const User = require("./models/user");
@@ -15,7 +15,7 @@ function getToken(req) {
 module.exports = function (app) {
   const opts = {};
   opts.jwtFromRequest = getToken;
-  opts.secretOrKey = secret;
+  opts.secretOrKey = SECRET;
 
   passport.use(
     "user",

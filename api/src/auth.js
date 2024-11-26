@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
-const config = require("./config");
+const { SECRET, ENVIRONMENT } = require("./config");
 const { validatePassword } = require("./utils");
 
 const EMAIL_OR_PASSWORD_INVALID = "EMAIL_OR_PASSWORD_INVALID";
@@ -41,13 +41,13 @@ class Auth {
       await user.save();
 
       let cookieOptions = { maxAge: COOKIE_MAX_AGE, httpOnly: true };
-      if (config.ENVIRONMENT === "development") {
+      if (ENVIRONMENT === "development") {
         cookieOptions = { ...cookieOptions, secure: false, domain: "localhost", sameSite: "Lax" };
       } else {
         cookieOptions = { ...cookieOptions, secure: true, domain: ".selego.co", sameSite: "Lax" };
       }
 
-      const token = jwt.sign({ _id: user.id }, config.secret, { expiresIn: JWT_MAX_AGE });
+      const token = jwt.sign({ _id: user.id }, SECRET, { expiresIn: JWT_MAX_AGE });
       res.cookie("jwt", token, cookieOptions);
 
       return res.status(200).send({ ok: true, token, user });
@@ -64,8 +64,8 @@ class Auth {
       if (password && !validatePassword(password)) return res.status(200).send({ ok: false, user: null, code: PASSWORD_NOT_VALIDATED });
 
       const user = await this.model.create({ name: username, organisation, password });
-      const token = jwt.sign({ _id: user._id }, config.secret, { expiresIn: JWT_MAX_AGE });
-      const opts = { maxAge: COOKIE_MAX_AGE, secure: config.ENVIRONMENT === "development" ? false : true, httpOnly: false };
+      const token = jwt.sign({ _id: user._id }, SECRET, { expiresIn: JWT_MAX_AGE });
+      const opts = { maxAge: COOKIE_MAX_AGE, secure: ENVIRONMENT === "development" ? false : true, httpOnly: false };
       res.cookie("jwt", token, opts);
 
       return res.status(200).send({ user, token, ok: true });
